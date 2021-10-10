@@ -1,0 +1,346 @@
+---
+title: "Analysis of false-belief stimuli from Bradford et al, 2020"
+author: "Sean Trott"
+date: "10/3/2021"
+output:
+  html_document:
+    toc: yes
+    toc_float: yes
+    # code_folding: hide
+  pdf_document: default
+  word_document:
+    toc: yes
+---
+
+```{r include=FALSE}
+library(tidyverse)
+library(lme4)
+library(ggridges)
+library(broom.mixed)
+library(lmerTest)
+```
+
+
+
+# Load data
+
+Here, we load the surprisal data for the *modified* stimuli from Bradford et al (2020), calculated from each of the models. 
+
+Original stimuli were obtained from OSF: https://osf.io/pw7h6/. 
+
+## BERT 
+
+```{r}
+# setwd("/Users/seantrott/Dropbox/UCSD/Research/NLMs/nlm-fb/src/analysis")
+
+df_fb_bl = read_csv("../../data/processed/bradford-fb-modified_bert-large_surprisals.csv")
+nrow(df_fb_bl)
+
+df_fb_bl = df_fb_bl %>%
+  mutate(condition = `Condition code`,
+         log_prob = log2(probability),
+         surprisal = -log_prob)
+
+table(df_fb_bl$condition, df_fb_bl$First_mention)
+table(df_fb_bl$condition, df_fb_bl$consistency)
+table(df_fb_bl$condition, df_fb_bl$belief)
+table(df_fb_bl$consistency, df_fb_bl$belief)
+
+df_fb_bl = df_fb_bl %>%
+  mutate(mentions_ratio = prior_mentions_start / prior_mentions_end) 
+
+```
+
+
+## GPT-3
+
+```{r}
+df_fb_gpt3 = read_csv("../../data/processed/bradford-fb-modified_gpt3_surprisals.csv")
+nrow(df_fb_gpt3)
+
+df_fb_gpt3 = df_fb_gpt3 %>%
+  mutate(condition = `Condition code`,
+         surprisal = -log_prob)
+
+table(df_fb_gpt3$condition)
+table(df_fb_gpt3$condition, df_fb_gpt3$consistency)
+table(df_fb_gpt3$condition, df_fb_gpt3$belief)
+table(df_fb_gpt3$consistency, df_fb_gpt3$belief)
+
+df_fb_gpt3 = df_fb_gpt3 %>%
+  mutate(mentions_ratio = prior_mentions_start / prior_mentions_end) 
+
+```
+
+
+
+# Visualization
+
+## BERT
+
+
+```{r}
+
+## Density version
+df_fb_bl %>%
+  filter(Modified == "Yes") %>%
+  ggplot(aes(x = surprisal,
+             y = belief,
+             fill = consistency)) +
+  geom_density_ridges2(aes(height = ..density..), 
+                       color=gray(0.25), 
+                       alpha = 0.5, 
+                       scale=0.85, 
+                       size=.9, 
+                       stat="density") +
+  labs(x = "Surprisal of target word",
+       y = "Belief condition") +
+  geom_vline(xintercept = 0, linetype = "dotted") +
+  theme_bw() +
+  facet_wrap(~First_mention + Recent_mention,
+             labeller = label_both)
+
+
+
+## Strip chart version
+df_fb_bl %>%
+  ggplot(aes(x = belief,
+             y = surprisal,
+             color = consistency)) +
+  geom_jitter(alpha = .1) +
+  stat_summary (fun = function(x){mean(x)},
+                fun.min = function(x){mean(x) - 2*sd(x)/sqrt(length(x))},
+                fun.max = function(x){mean(x) + 2*sd(x)/sqrt(length(x))},
+                geom= 'pointrange', 
+                position=position_dodge(width=0.95)) +
+  labs(x = "Condition",
+       y = "Surprisal (BERT)") +
+  theme_bw() +
+  facet_wrap(~Modified + First_mention)
+
+df_fb_bl %>%
+  ggplot(aes(x = condition,
+             y = surprisal,
+             color = First_mention)) +
+  geom_jitter(alpha = .1) +
+  stat_summary (fun = function(x){mean(x)},
+                fun.min = function(x){mean(x) - 2*sd(x)/sqrt(length(x))},
+                fun.max = function(x){mean(x) + 2*sd(x)/sqrt(length(x))},
+                geom= 'pointrange', 
+                position=position_dodge(width=0.95)) +
+  labs(x = "Condition",
+       y = "Surprisal (BERT)") +
+  theme_bw() 
+
+```
+
+## GPT-3
+
+
+```{r}
+
+## Density version
+df_fb_gpt3 %>%
+  filter(Modified == "Yes") %>%
+  ggplot(aes(x = surprisal,
+             y = belief,
+             fill = consistency)) +
+  geom_density_ridges2(aes(height = ..density..), 
+                       color=gray(0.25), 
+                       alpha = 0.5, 
+                       scale=0.85, 
+                       size=.9, 
+                       stat="density") +
+  labs(x = "Surprisal of target word",
+       y = "Belief condition") +
+  geom_vline(xintercept = 0, linetype = "dotted") +
+  theme_bw() +
+  facet_wrap(~First_mention +
+               Recent_mention,
+             labeller = label_both)
+
+## Strip chart version
+df_fb_gpt3 %>%
+  ggplot(aes(x = belief,
+             y = surprisal,
+             color = consistency)) +
+  geom_jitter(alpha = .1) +
+  stat_summary (fun = function(x){mean(x)},
+                fun.min = function(x){mean(x) - 2*sd(x)/sqrt(length(x))},
+                fun.max = function(x){mean(x) + 2*sd(x)/sqrt(length(x))},
+                geom= 'pointrange', 
+                position=position_dodge(width=0.95)) +
+  labs(x = "Condition",
+       y = "Surprisal (GPT-3)") +
+  theme_bw() +
+  facet_wrap(~First_mention + Recent_mention +mentions_ratio,
+             labeller = label_both,
+             ncol=2)
+
+
+# Original condition
+df_fb_gpt3 %>%
+  ggplot(aes(x = condition,
+             y = surprisal,
+             color = condition)) +
+  geom_jitter(alpha = .1) +
+  stat_summary (fun = function(x){mean(x)},
+                fun.min = function(x){mean(x) - 2*sd(x)/sqrt(length(x))},
+                fun.max = function(x){mean(x) + 2*sd(x)/sqrt(length(x))},
+                geom= 'pointrange', 
+                position=position_dodge(width=0.95)) +
+  labs(x = "Condition",
+       y = "Surprisal of target word") +
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  theme_bw() 
+
+## By first mention
+df_fb_gpt3 %>%
+  ggplot(aes(x = condition,
+             y = surprisal,
+             color = First_mention)) +
+  geom_jitter(alpha = .1) +
+  stat_summary (fun = function(x){mean(x)},
+                fun.min = function(x){mean(x) - 2*sd(x)/sqrt(length(x))},
+                fun.max = function(x){mean(x) + 2*sd(x)/sqrt(length(x))},
+                geom= 'pointrange', 
+                position=position_dodge(width=0.95)) +
+  labs(x = "Condition",
+       y = "Surprisal (GPT-3)") +
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  theme_bw()  +
+  facet_wrap(~Recent_mention,
+             labeller = label_both)
+
+
+```
+
+# Analysis
+
+## BERT
+
+```{r}
+model_full = lmer(data = df_fb_bl,
+                  surprisal ~ belief * consistency + 
+                    First_mention +
+                    Recent_mention +
+                    mentions_ratio + 
+                    (1 + belief * consistency | Item),
+                  control=lmerControl(optimizer="bobyqa"),
+                  REML = FALSE)
+
+model_just_fe = lmer(data = df_fb_bl,
+                  surprisal ~ belief + consistency + 
+                    First_mention +
+                    Recent_mention +
+                    mentions_ratio +
+                    (1 + belief * consistency | Item),
+                  control=lmerControl(optimizer="bobyqa"),
+                  REML = FALSE)
+
+
+model_no_belief = lmer(data = df_fb_bl,
+                  surprisal ~  consistency + 
+                    First_mention +
+                    Recent_mention +
+                    mentions_ratio +
+                    (1 + belief * consistency | Item),
+                  control=lmerControl(optimizer="bobyqa"),
+                  REML = FALSE)
+
+model_no_con = lmer(data = df_fb_bl,
+                  surprisal ~  belief + 
+                    First_mention +
+                    Recent_mention +
+                    mentions_ratio +
+                    (1 + belief * consistency | Item),
+                  control=lmerControl(optimizer="bobyqa"),
+                  REML = FALSE)
+
+summary(model_full)
+anova(model_full, model_just_fe)
+anova(model_just_fe, model_no_belief)
+anova(model_just_fe, model_no_con)
+
+
+df_tidy_results = broom.mixed::tidy(model_full)
+
+df_tidy_results %>%
+  filter(effect == "fixed") %>%
+  ggplot(aes(x = term,
+             y = estimate)) +
+  geom_point() +
+  coord_flip() +
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  geom_errorbar(aes(ymin = estimate - 2*std.error, 
+                    ymax = estimate + 2*std.error), 
+                width=.2,
+                position=position_dodge(.9)) +
+  theme_minimal()
+```
+
+
+## GPT-3
+
+```{r}
+model_full = lmer(data = df_fb_gpt3,
+                  surprisal ~ belief * consistency + 
+                    First_mention +
+                    Recent_mention + 
+                    mentions_ratio +
+                    (1 + belief * consistency | Item),
+                  control=lmerControl(optimizer="bobyqa"),
+                  REML = FALSE)
+
+model_just_fe = lmer(data = df_fb_gpt3,
+                  surprisal ~ belief + consistency + 
+                    First_mention +
+                    Recent_mention + 
+                    mentions_ratio +
+                    (1 + belief * consistency | Item),
+                  control=lmerControl(optimizer="bobyqa"),
+                  REML = FALSE)
+
+
+model_no_belief = lmer(data = df_fb_gpt3,
+                  surprisal ~  consistency + 
+                    First_mention +
+                    Recent_mention + 
+                    mentions_ratio +
+                    (1 + belief * consistency | Item),
+                  control=lmerControl(optimizer="bobyqa"),
+                  REML = FALSE)
+
+model_no_con = lmer(data = df_fb_gpt3,
+                  surprisal ~  belief + 
+                    First_mention +
+                    Recent_mention + 
+                    mentions_ratio +
+                    (1 + belief * consistency | Item),
+                  control=lmerControl(optimizer="bobyqa"),
+                  REML = FALSE)
+
+summary(model_full)
+anova(model_full, model_just_fe)
+anova(model_just_fe, model_no_belief)
+anova(model_just_fe, model_no_con)
+
+
+df_tidy_results = broom.mixed::tidy(model_full)
+
+df_tidy_results %>%
+  filter(effect == "fixed") %>%
+  ggplot(aes(x = term,
+             y = estimate)) +
+  geom_point() +
+  coord_flip() +
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  geom_errorbar(aes(ymin = estimate - 2*std.error, 
+                    ymax = estimate + 2*std.error), 
+                width=.2,
+                position=position_dodge(.9)) +
+  theme_minimal()
+```
+
+
+
