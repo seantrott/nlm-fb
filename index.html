@@ -291,7 +291,7 @@ div.tocify {
 <blockquote>
 <p>{A} is reading a {X}. When {A} is done, {A} puts the {X} on the {start}. {A} leaves to get something to eat in the kitchen. {B} comes in and moves the {X} from the {start} to a {end}. Then {A} comes back into the room. {A} thinks the {X} is on the [MASK] .</p>
 </blockquote>
-<p>In this case, an NLM would be asked to predict the probability of <code>start</code> and <code>end</code> location occurring at the end of the passage.</p>
+<p>In this case, an NLM would be asked to predict the probability of <code>start</code> and <code>end</code> location occurring at the end of the passage. We then measured the <em>log odds</em> of these probabilities, i.e., <code>log(p(start)/p(end))</code>: a higher log-odds reflects a higher probability assigned to the <code>start</code> (incorrect) vs. <code>end</code> (true) location, while a lower log-odds reflects the reverse.</p>
 <p>Because the task is fundamentally a <strong>referential prediction task</strong>, we sought to control for other features that might confound the probability of mentioning either the <code>start</code> or <code>end</code> location---i.e., features that were <em>independent</em> of the knowledge state of <code>A</code>, but which theoretically could increase or decrease the probability of mentioning the <code>start</code> vs. <code>end</code> location.</p>
 <p>This included:</p>
 <ul>
@@ -302,7 +302,15 @@ div.tocify {
 <li><code>mentions end</code>: how many times the <code>end</code> location is mentioned.</li>
 </ul>
 <p>Additionally, we manipulated how <strong>transparent</strong> the <code>knowledge cue</code> was, i.e., whether the NLM is asked to predict where <code>A</code> <em>thinks</em> the object is, or where <code>A</code> will <em>look</em> for the object.</p>
-<p>The final analysis can be found: <a href="https://seantrott.github.io/nlm-fb/src/analysis/analysis_fb.html">here</a>.</p>
+<p>The final analysis can be found <a href="https://seantrott.github.io/nlm-fb/src/analysis/analysis_fb.html">here</a>.</p>
+<p><strong>Summary of finding</strong>: Overall, both models tested (BERT and GPT-3) had higher log-odds in the <code>false belief</code> condition than the <code>true belief</code> condition. In other words, they assigned a higher likelihood to words corresponding to the <em>incorrect</em> location when the character could be inferred to have a <em>false belief</em>. The log-odds was lower in the <code>true belief</code> condition, suggesting that the model's probability distribution over upcoming words was at least partially influenced by the manipulation. (Note that this is <em>not</em> equivalent to saying that the models &quot;have&quot; Theory of Mind---merely that they display behavior correlated with the manipulation of knowledge states.)</p>
+</div>
+<div id="analysis-2-deception-stimuli" class="section level2">
+<h2>Analysis 2: Deception stimuli</h2>
+<p>We also adapted a passage from a study (<a href="https://www.tandfonline.com/doi/pdf/10.1080/13546800701748805">Shrayne et al, 2008</a>) investigating <em>deception</em>.</p>
+<p>In this case, a character receives a present, and places it in one of their drawers (the <code>top</code> or <code>bottom</code> drawer). We manipulated whether they want to share (<code>Cooperation</code>) or hide (<code>Deception</code>) this present from their sibling. Then, when the sibling asks where it is, we ask whether the NLM assigns a higher likelihood to the character telling them the <code>true</code> vs. <code>false</code> location.</p>
+<p>The final analysis can be found <a href="https://seantrott.github.io/nlm-fb/src/analysis/analysis_deception.html">here</a>.</p>
+<p><strong>Summary of finding</strong>: Unlike</p>
 </div>
 </div>
 <div id="references" class="section level1">
