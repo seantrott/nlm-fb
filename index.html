@@ -308,9 +308,38 @@ div.tocify {
 <div id="analysis-2-deception-stimuli" class="section level2">
 <h2>Analysis 2: Deception stimuli</h2>
 <p>We also adapted a passage from a study (<a href="https://www.tandfonline.com/doi/pdf/10.1080/13546800701748805">Shrayne et al, 2008</a>) investigating <em>deception</em>.</p>
-<p>In this case, a character receives a present, and places it in one of their drawers (the <code>top</code> or <code>bottom</code> drawer). We manipulated whether they want to share (<code>Cooperation</code>) or hide (<code>Deception</code>) this present from their sibling. Then, when the sibling asks where it is, we ask whether the NLM assigns a higher likelihood to the character telling them the <code>true</code> vs. <code>false</code> location.</p>
+<p>In this case, a character receives a present, and places it in one of their drawers (the <code>top</code> or <code>bottom</code> drawer). We manipulated whether they want to share (<code>Cooperation</code>) or hide (<code>Deception</code>) this present from their sibling. Then, when the sibling asks where it is, we ask whether the NLM assigns a higher likelihood to the character telling them the <code>true</code> vs. <code>false</code> location. As with Analysis 1, we sampled a variety of names and objects. We also manipulated when and how many times each location was mentioned.</p>
 <p>The final analysis can be found <a href="https://seantrott.github.io/nlm-fb/src/analysis/analysis_deception.html">here</a>.</p>
-<p><strong>Summary of finding</strong>: Unlike</p>
+<p><strong>Summary of finding</strong>: Unlike Analysis 1, the models did not display consistent behavior correlated with the <code>intent</code> (<code>Cooperation</code> vs. <code>Deception</code>) manipulation. (BERT did show a significant effect in certain cases, but GPT-3 did not.)</p>
+</div>
+<div id="analysis-3-bradford-et-al-2020-stimuli" class="section level2">
+<h2>Analysis 3: Bradford et al (2020) stimuli</h2>
+<p>Next, we adapted stimuli from a recent study investigating implicit false-belief attribution during reading (<a href="https://www.sciencedirect.com/science/article/pii/S0010945220300411">Bradford et al, 2020</a>). They measured the size of the N400 effect, often taken to reflect processing difficulty. Interestingly, this study reported the following results:</p>
+<ul>
+<li>As expected, in the <code>true belief</code> condition, participants exhibited a larger N400 effect in the <code>inconsistent</code> condition, i.e., when the character looked in the <em>wrong</em> place but in principle knew where the object was actually located.</li>
+<li>Surprisingly, in the <code>false belief</code> condition, participants exhibited a larger N400 effect in the <code>consistent</code> condition: even though the character didn't know the object had been moved, participants seemed to expect (as measured by the N400) that they should still be looking in the <em>correct</em> location.</li>
+</ul>
+<p>One way of interpreting both results is that participants displayed an <strong>egocentric bias</strong>: they knew the object had been moved, and so were surprised whenever characters looked in the incorrect location. This was true even when characters could be inferred to <em>not</em> know the object had been moved, i.e., they had a false belief.</p>
+<p>We ran these stimuli through both language models, with no modifications other than to mask the final word. The final analysis can be found <a href="https://seantrott.github.io/nlm-fb/src/analysis/analysis_fb-bradford.html">here</a>.</p>
+<p><strong>Summary of findings</strong>: BERT did not display behavior consistent either with the manipulation of true/false belief, <em>or</em> with the egocentric human results. In contrast, GPT-3 showed a similar bias towards the &quot;true location&quot; of the object---surprisal was highest in cases when the character looked for the object in the <em>incorrect</em> location, regardless of the character's knowledge state.</p>
+</div>
+<div id="analysis-4-modified-bradford-et-al-2020-stimuli" class="section level2">
+<h2>Analysis 4: Modified Bradford et al (2020) stimuli</h2>
+<p>The results above were surprising for several reasons.</p>
+<ul>
+<li>First, Analysis 1 suggested that both models did produce different probability distributions conditioned on a character's knowledge state. In Analysis 3, neither model did.</li>
+<li>Second, GPT-3 <em>did</em> produce behavior consistent with the human N400 results, which appeared to reflect an egocentric bias. If this is true, it suggests that GPT-3 (at least on this task) also displayed an &quot;egocentric bias&quot; towards the correct location of the object.</li>
+</ul>
+<p>However, the original stimuli have several important confounds:</p>
+<ul>
+<li>The incorrect location is always mentioned first.<br />
+</li>
+<li>The correct location is always mentioned second (and most recently).</li>
+</ul>
+<p>To correct for this, we automatically generated new stimuli that either added in a sentence at the beginning, or a sentence towards the end of the passage. These new sentences contained a reference either to the correct or incorrect location, and allowed us to assess the impact of which location was mentioned first (and most recently).</p>
+<p>The final analysis can be found <a href="https://seantrott.github.io/nlm-fb/src/analysis/analysis_fb-bradford-modified.html">here</a>.</p>
+<p><strong>Summary of findings</strong>: - As before, BERT neither &quot;passed&quot; the test nor displayed behavior equivalent to humans. If anything, BERT appeared to display a bias for the <em>incorrect</em> location: surprisal was higher whenever the character looked for the object in the correct location. - In contrast, GPT-3 continued to display behavior consistent with humans, regardless of which location was mentioned first.<br />
+- However, when the incorrect (<code>start</code>) location was mentioned most <em>recently</em>, GPT-3 no longer showed a difference between conditions.</p>
 </div>
 </div>
 <div id="references" class="section level1">
